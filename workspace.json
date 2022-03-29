@@ -1,4 +1,7 @@
 {
   "version": 2,
-  "projects": {}
+  "projects": {
+    "silly-cache": "packages/silly-cache",
+    "silly-node-cache": "packages/silly-node-cache"
+  }
 }
