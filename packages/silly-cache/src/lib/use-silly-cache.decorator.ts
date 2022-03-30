@@ -1,19 +1,19 @@
 import { SillyCache } from "./silly-cache";
 
-export interface DecoratedMethodMetadata<T> {
-  thiz: T;
-  target: any;
+export interface DecoratedMethodData<C,A,T> {
+  thiz: C;
+  args: A;
+  target: T;
   propertyKey: string;
 }
 
-export type DecoratedMethodParamFactory<P, T> = (
-  metadata: DecoratedMethodMetadata<T>,
-  ...decoratedMethodArgs: any[]
+export type DecoratedMethodParamFactory<P, C, A, T> = (
+  data: DecoratedMethodData<C,A,T>
 ) => P;
 
-export function UseSillyCacheForPromise<T, K>(
-  getSillyCache: DecoratedMethodParamFactory<SillyCache<K>, T>,
-  getSillyCacheKey: DecoratedMethodParamFactory<K, T>
+export function UseSillyCacheForPromise<K, C, A, T>(
+  getSillyCache: DecoratedMethodParamFactory<SillyCache<K>, C, A, T>,
+  getSillyCacheKey: DecoratedMethodParamFactory<K, C, A, T>
 ) {
   return function (
     target: any,
@@ -21,10 +21,10 @@ export function UseSillyCacheForPromise<T, K>(
     descriptor: PropertyDescriptor
   ) {
     descriptor.value = new Proxy(descriptor.value, {
-      apply: async function (original, thiz: T, args: any[]) {
-        const metadata = { thiz, target, propertyKey };
-        const cache = getSillyCache(metadata, ...args);
-        const cacheKey = getSillyCacheKey(metadata, ...args);
+      apply: async function (original, thiz: C, args: Array<A>) {
+        const decoratedMethodData = { thiz, target, propertyKey, args: args as unknown as A};
+        const cache = getSillyCache(decoratedMethodData);
+        const cacheKey = getSillyCacheKey(decoratedMethodData);
         const cachedVal = await cache.getCacheValue(cacheKey);
         if (!isCacheMiss(cachedVal)) {
           return cachedVal;

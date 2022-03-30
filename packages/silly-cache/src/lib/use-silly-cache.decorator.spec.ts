@@ -39,9 +39,9 @@ describe.each`
           [cacheKey, originalMethodReturnValue]
         ]);
 
-        @UseSillyCacheForPromise<ClassUnderTest, string>(
-          (metadata) => metadata.thiz.cache,
-          (_metadata, arg) => arg
+        @UseSillyCacheForPromise(
+          (data: {thiz: ClassUnderTest}) => data.thiz.cache,
+          (data: {args: [string]}) => data.args[0]
         )
         public expensiveOperation(arg: string): Promise<any> {
           return Promise.resolve(this.data.get(arg));
