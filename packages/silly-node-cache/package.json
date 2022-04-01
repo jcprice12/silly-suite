@@ -1,6 +1,6 @@
 {
   "name": "@silly/node-cache",
-  "version": "0.0.5",
+  "version": "1.0.1",
   "type": "commonjs",
   "peerDependencies": {
     "node-cache": "5.x"
