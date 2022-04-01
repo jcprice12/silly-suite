@@ -21,8 +21,8 @@ class FakeSillyCache implements SillyCache<string> {
 const makeFakeSillyCache = () => new FakeSillyCache();
 
 describe.each`
-  sillyCacheName             | makeSillyCache
-  ${'MySillyCache'}          | ${makeFakeSillyCache}
+  sillyCacheName         | makeSillyCache
+  ${FakeSillyCache.name} | ${makeFakeSillyCache}
 `(
   'Given implementation of silly cache: $sillyCacheName',
   ({ makeSillyCache }) => {
@@ -36,12 +36,12 @@ describe.each`
         constructor(private readonly cache: SillyCache<string>) {}
 
         private readonly data: Map<string, any> = new Map([
-          [cacheKey, originalMethodReturnValue]
+          [cacheKey, originalMethodReturnValue],
         ]);
 
         @UseSillyCacheForPromise(
-          (data: {thiz: ClassUnderTest}) => data.thiz.cache,
-          (data: {args: [string]}) => data.args[0]
+          (data: { thiz: ClassUnderTest }) => data.thiz.cache,
+          (data: { args: [string] }) => data.args[0]
         )
         public expensiveOperation(arg: string): Promise<any> {
           return Promise.resolve(this.data.get(arg));

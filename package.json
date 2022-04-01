@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "version": "lerna version --conventional-commits",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "version": "lerna version --conventional-commits"
   },
   "private": true,
   "devDependencies": {

@@ -1,6 +1,6 @@
-import { SillyCache } from "./silly-cache";
+import { SillyCache } from './silly-cache';
 
-export interface DecoratedMethodData<C,A,T> {
+export interface DecoratedMethodData<C, A, T> {
   thiz: C;
   args: A;
   target: T;
@@ -8,7 +8,7 @@ export interface DecoratedMethodData<C,A,T> {
 }
 
 export type DecoratedMethodParamFactory<P, C, A, T> = (
-  data: DecoratedMethodData<C,A,T>
+  data: DecoratedMethodData<C, A, T>
 ) => P;
 
 export function UseSillyCacheForPromise<K, C, A, T>(
@@ -22,7 +22,12 @@ export function UseSillyCacheForPromise<K, C, A, T>(
   ) {
     descriptor.value = new Proxy(descriptor.value, {
       apply: async function (original, thiz: C, args: Array<A>) {
-        const decoratedMethodData = { thiz, target, propertyKey, args: args as unknown as A};
+        const decoratedMethodData = {
+          thiz,
+          target,
+          propertyKey,
+          args: args as unknown as A,
+        };
         const cache = getSillyCache(decoratedMethodData);
         const cacheKey = getSillyCacheKey(decoratedMethodData);
         const cachedVal = await cache.getCacheValue(cacheKey);
@@ -32,7 +37,7 @@ export function UseSillyCacheForPromise<K, C, A, T>(
         const originalReturnValue = await original.apply(thiz, args);
         await cache.setCacheValue(cacheKey, originalReturnValue);
         return originalReturnValue;
-      }
+      },
     });
   };
 }

@@ -1,5 +1,5 @@
-import { SillyCacheWrapper } from "@silly/cache";
-import NodeCache = require("node-cache");
+import { SillyCacheWrapper } from '@silly/cache';
+import NodeCache = require('node-cache');
 
 export class SillyNodeCacheWrapper
   implements SillyCacheWrapper<string | number, NodeCache>
