@@ -1,0 +1,32 @@
+{
+  "root": "packages/publishable/silly-lock",
+  "sourceRoot": "packages/publishable/silly-lock/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/publishable/silly-lock",
+        "main": "packages/publishable/silly-lock/src/index.ts",
+        "tsConfig": "packages/publishable/silly-lock/tsconfig.lib.json",
+        "assets": ["packages/publishable/silly-lock/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/publishable/silly-lock/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/publishable/silly-lock"],
+      "options": {
+        "jestConfig": "packages/publishable/silly-lock/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

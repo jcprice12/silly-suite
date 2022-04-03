@@ -1,7 +1,12 @@
 {
   "version": 2,
   "projects": {
-    "silly-cache": "packages/silly-cache",
-    "silly-node-cache": "packages/silly-node-cache"
+    "publishable-silly-async-lock": "packages/publishable/silly-async-lock",
+    "silly-cache": "packages/publishable/silly-cache",
+    "silly-decorator": "packages/publishable/silly-decorator",
+    "silly-dynamo-lock": "packages/publishable/silly-dynamo-lock",
+    "silly-lock": "packages/publishable/silly-lock",
+    "silly-node-cache": "packages/publishable/silly-node-cache",
+    "silly-sleep": "packages/publishable/silly-sleep"
   }
 }

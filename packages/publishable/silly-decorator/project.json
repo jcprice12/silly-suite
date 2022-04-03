@@ -1,0 +1,32 @@
+{
+  "root": "packages/publishable/silly-decorator",
+  "sourceRoot": "packages/publishable/silly-decorator/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/publishable/silly-decorator",
+        "main": "packages/publishable/silly-decorator/src/index.ts",
+        "tsConfig": "packages/publishable/silly-decorator/tsconfig.lib.json",
+        "assets": ["packages/publishable/silly-decorator/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/publishable/silly-decorator/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/publishable/silly-decorator"],
+      "options": {
+        "jestConfig": "packages/publishable/silly-decorator/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

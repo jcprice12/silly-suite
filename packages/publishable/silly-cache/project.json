@@ -1,0 +1,32 @@
+{
+  "root": "packages/publishable/silly-cache",
+  "sourceRoot": "packages/publishable/silly-cache/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/publishable/silly-cache",
+        "main": "packages/publishable/silly-cache/src/index.ts",
+        "tsConfig": "packages/publishable/silly-cache/tsconfig.lib.json",
+        "assets": ["packages/publishable/silly-cache/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/publishable/silly-cache/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/publishable/silly-cache"],
+      "options": {
+        "jestConfig": "packages/publishable/silly-cache/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
