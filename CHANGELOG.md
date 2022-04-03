@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [2.0.1](https://github.com/jcprice12/silly-suite/compare/v2.0.0...v2.0.1) (2022-04-03)
+
+
+### Bug Fixes
+
+* commitizen-friendly repo ([2f3e887](https://github.com/jcprice12/silly-suite/commit/2f3e8874dd9b9b180686c772fef7487459368094))
+* dynamo lock condition expression ([7c76307](https://github.com/jcprice12/silly-suite/commit/7c763076fdaec3dd2c293b3a961d6527d1dfb1e8))
+
+
+
 ## [2.0.0](https://github.com/jcprice12/silly-suite/compare/v1.0.1...v2.0.0) (2022-04-03)
 
 
