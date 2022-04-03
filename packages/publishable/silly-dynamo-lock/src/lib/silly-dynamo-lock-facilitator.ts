@@ -225,7 +225,7 @@ export class SillyDynamoLockFacilitator
     expressionAttributeNames: Record<string, string>;
   } {
     const conditionExpression = attributeNames
-      .map((attributeName) => `#${attributeName}`)
+      .map((attributeName) => `attribute_not_exists(#${attributeName})`)
       .join(' AND ');
     const expressionAttributeNames = attributeNames
       .map((attributeName) => {
