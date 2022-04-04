@@ -82,8 +82,8 @@ describe('Given a dynamodb client', () => {
           expect(criticalOperationSpy).toHaveBeenCalledTimes(
             resolvedProcesses.length
           );
-          resolvedProcesses.forEach(() => {
-            expect(criticalOperationSpy).toHaveBeenCalledWith(1);
+          resolvedProcesses.forEach((_v, i) => {
+            expect(criticalOperationSpy).toHaveBeenNthCalledWith(i + 1, 1);
           });
         });
       });
