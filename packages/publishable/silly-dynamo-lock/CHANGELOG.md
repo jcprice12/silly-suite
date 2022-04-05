@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [2.0.4](https://github.com/jcprice12/silly-suite/compare/v2.0.3...v2.0.4) (2022-04-05)
+
+
+### Performance Improvements
+
+* dynamo lock is released ([a56e5d0](https://github.com/jcprice12/silly-suite/commit/a56e5d03ffb65814828c8a1d1c3bab2d6c8c304a))
+
+
+
 ### [2.0.3](https://github.com/jcprice12/silly-suite/compare/v2.0.2...v2.0.3) (2022-04-04)
 
 **Note:** Version bump only for package @silly-suite/silly-dynamo-lock
