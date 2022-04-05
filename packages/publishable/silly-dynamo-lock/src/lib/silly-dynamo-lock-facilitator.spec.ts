@@ -20,13 +20,13 @@ describe('Given a dynamodb client', () => {
     beforeEach(() => {
       sillyLockFacilitator = new SillyDynamoLockFacilitator({
         dynamoClient: client,
-        heartbeatInterval: 300,
+        heartbeatInterval: 100,
         keyDefinition: {
           hashKeyName: 'hk', //see jest-dynalite-config.js
           rangeKeyName: 'rk', //see jest-dynalite-config.js
         },
-        leaseDuration: 1000,
-        maxAttemptsToAcquireLock: 2,
+        leaseDuration: 300,
+        maxAttemptsToAcquireLock: 10,
         ownerName: 'app1',
         tableName: 'TestTable', //see jest-dynalite-config.js
       });
@@ -42,7 +42,7 @@ describe('Given a dynamodb client', () => {
         criticalOperation = async () => {
           criticalOperationState++;
           function delayRandomTime() {
-            return new Promise((r) => setTimeout(r, Math.random() * 100));
+            return new Promise((r) => setTimeout(r, Math.random() * 50));
           }
           await delayRandomTime();
           criticalOperationSpy(criticalOperationState);
@@ -74,7 +74,7 @@ describe('Given a dynamodb client', () => {
 
         beforeEach(async () => {
           resolvedProcesses = await Promise.all(
-            createGivenNumberOfProcesses(5)
+            createGivenNumberOfProcesses(4)
           );
         });
 

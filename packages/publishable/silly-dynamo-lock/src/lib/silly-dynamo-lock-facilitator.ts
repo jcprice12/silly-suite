@@ -10,7 +10,11 @@ import { SillyLockFacilitator } from '@silly-suite/silly-lock';
 import { sleep } from '@silly-suite/silly-sleep';
 import { pick } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { DynamoKeyDefinition, DynamoKeyValue } from './dynamo-key.model';
+import {
+  AllowedDynamoKeyType,
+  DynamoKeyDefinition,
+  DynamoKeyValue,
+} from './dynamo-key.model';
 import { LockAcquisitionAttemptsExhaustedError } from './lock-acquisition-attempts-exhausted.error';
 import { BaseLockItem, NormalizedLockItem } from './lock-item.model';
 
@@ -27,6 +31,7 @@ export interface SillyDynamoLockFacilitatorConfig {
 export class SillyDynamoLockFacilitator
   implements SillyLockFacilitator<DynamoKeyValue>
 {
+  private readonly releasedLockLeaseDuration = 0;
   private readonly lockDoesNotExistConditionConfig: {
     conditionExpression: string;
     expressionAttributeNames: Record<string, string>;
@@ -41,12 +46,12 @@ export class SillyDynamoLockFacilitator
     executeCriticalSection: () => Promise<V>
   ): Promise<V> {
     const lockItem = await this.acquireLock(lockKey);
-    let shouldRelease = false;
+    let isReleased = false;
     const maintainLock = async (previousRecordVersionNumber: string) => {
       await sleep(this.config.heartbeatInterval);
-      if (!shouldRelease) {
+      if (!isReleased) {
         try {
-          const updatedLockItem = await this.updateExistingLockItem(
+          const updatedLockItem = await this.leaseExistingLockItem(
             lockKey,
             previousRecordVersionNumber
           );
@@ -61,7 +66,8 @@ export class SillyDynamoLockFacilitator
     try {
       result = await executeCriticalSection();
     } finally {
-      shouldRelease = true;
+      isReleased = true;
+      this.releaseLockItem(lockKey, lockItem.recordVersionNumber);
     }
     return result;
   }
@@ -75,17 +81,17 @@ export class SillyDynamoLockFacilitator
       try {
         let newLockItem: NormalizedLockItem;
         if (currentLockItem) {
-          newLockItem = await this.updateExistingLockItem(
+          await sleep(currentLockItem.leaseDuration);
+          newLockItem = await this.leaseExistingLockItem(
             lockKey,
             currentLockItem.recordVersionNumber
           );
         } else {
-          newLockItem = await this.createNewLockItem(lockKey);
+          newLockItem = await this.leaseNewLockItem(lockKey);
         }
         return newLockItem;
       } catch (e) {
         if (e instanceof ConditionalCheckFailedException) {
-          await sleep(this.config.leaseDuration);
           return await this.acquireLock(lockKey, attempt++);
         }
         throw e;
@@ -114,15 +120,26 @@ export class SillyDynamoLockFacilitator
     return undefined;
   }
 
-  private async createNewLockItem(
+  private async releaseLockItem(
+    lockKey: DynamoKeyValue,
+    previousRecordVersionNumber: string
+  ): Promise<void> {
+    try {
+      await this.safelyUpdateLockItem(lockKey, previousRecordVersionNumber, {
+        ...this.createUnmarshalledKey(lockKey),
+        ownerName: this.config.ownerName,
+        leaseDuration: this.releasedLockLeaseDuration,
+        recordVersionNumber: previousRecordVersionNumber,
+      });
+    } catch {
+      //release failed, other method invocations may wait a bit longer than normal to acquire lock
+    }
+  }
+
+  private async leaseNewLockItem(
     lockKey: DynamoKeyValue
   ): Promise<NormalizedLockItem> {
-    const unmarshalledKey = this.createUnmarshalledKey(lockKey);
-    const baseLockItem = this.createNewBaseLockItem();
-    const lockItem = {
-      ...baseLockItem,
-      ...unmarshalledKey,
-    };
+    const lockItem = this.createLeasedLockItem(lockKey);
     await this.config.dynamoClient.send(
       new PutItemCommand({
         TableName: this.config.tableName,
@@ -133,23 +150,30 @@ export class SillyDynamoLockFacilitator
           this.lockDoesNotExistConditionConfig.expressionAttributeNames,
       })
     );
-    return this.normalizeLockItem(lockKey, baseLockItem);
+    return this.normalizeLockItem(lockKey, lockItem);
   }
 
-  private async updateExistingLockItem(
+  private async leaseExistingLockItem(
     lockKey: DynamoKeyValue,
     previousRecordVersionNumber: string
   ): Promise<NormalizedLockItem> {
-    const unmarshalledKey = this.createUnmarshalledKey(lockKey);
-    const baseLockItem = this.createNewBaseLockItem();
-    const lockItem = {
-      ...baseLockItem,
-      ...unmarshalledKey,
-    };
+    const lockItem = this.createLeasedLockItem(lockKey);
+    return this.safelyUpdateLockItem(
+      lockKey,
+      previousRecordVersionNumber,
+      lockItem
+    );
+  }
+
+  private async safelyUpdateLockItem(
+    lockKey: DynamoKeyValue,
+    previousRecordVersionNumber: string,
+    updatedLockItem: { [x: string]: AllowedDynamoKeyType } & BaseLockItem
+  ): Promise<NormalizedLockItem> {
     await this.config.dynamoClient.send(
       new PutItemCommand({
         TableName: this.config.tableName,
-        Item: marshall(lockItem),
+        Item: marshall(updatedLockItem),
         ConditionExpression: `${this.lockDoesNotExistConditionConfig.conditionExpression} OR recordVersionNumber = :previousRecordVersionNumber`,
         ExpressionAttributeNames:
           this.lockDoesNotExistConditionConfig.expressionAttributeNames,
@@ -158,7 +182,7 @@ export class SillyDynamoLockFacilitator
         }),
       })
     );
-    return this.normalizeLockItem(lockKey, baseLockItem);
+    return this.normalizeLockItem(lockKey, updatedLockItem);
   }
 
   private normalizeLockItem<I extends BaseLockItem>(
@@ -178,8 +202,11 @@ export class SillyDynamoLockFacilitator
     };
   }
 
-  private createNewBaseLockItem(): BaseLockItem {
+  private createLeasedLockItem(
+    lockKey: DynamoKeyValue
+  ): { [x: string]: AllowedDynamoKeyType } & BaseLockItem {
     return {
+      ...this.createUnmarshalledKey(lockKey),
       ownerName: this.config.ownerName,
       leaseDuration: this.config.leaseDuration,
       recordVersionNumber: uuidv4(),
