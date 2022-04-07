@@ -1,5 +1,5 @@
 {
-  "name": "@silly-suite/publishable-silly-async-lock",
+  "name": "@silly-suite/silly-async-lock",
   "version": "2.0.0",
   "type": "commonjs"
 }

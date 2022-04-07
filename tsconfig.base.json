@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@silly-suite/publishable-silly-async-lock": [
+      "@silly-suite/silly-async-lock": [
         "packages/publishable/silly-async-lock/src/index.ts"
       ],
       "@silly-suite/silly-cache": [

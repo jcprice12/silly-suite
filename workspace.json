@@ -1,7 +1,7 @@
 {
   "version": 2,
   "projects": {
-    "publishable-silly-async-lock": "packages/publishable/silly-async-lock",
+    "silly-async-lock": "packages/publishable/silly-async-lock",
     "silly-cache": "packages/publishable/silly-cache",
     "silly-decorator": "packages/publishable/silly-decorator",
     "silly-dynamo-lock": "packages/publishable/silly-dynamo-lock",
