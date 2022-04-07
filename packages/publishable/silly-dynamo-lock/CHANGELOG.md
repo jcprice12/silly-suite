@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [2.0.5](https://github.com/jcprice12/silly-suite/compare/v2.0.4...v2.0.5) (2022-04-07)
+
+
+### Bug Fixes
+
+* fixed bugs in dynamo lock facilitator as a result of enforcing coverage ([29aea23](https://github.com/jcprice12/silly-suite/commit/29aea23cfcab4c452f8c1c0c2dfcfba4b94f595b))
+
+
+
 ### [2.0.4](https://github.com/jcprice12/silly-suite/compare/v2.0.3...v2.0.4) (2022-04-05)
 
 
