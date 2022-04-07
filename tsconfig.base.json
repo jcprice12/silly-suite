@@ -18,9 +18,6 @@
       "@silly-suite/publishable-silly-async-lock": [
         "packages/publishable/silly-async-lock/src/index.ts"
       ],
-      "@silly-suite/shared-silly-sleep": [
-        "packages/shared/silly-sleep/src/index.ts"
-      ],
       "@silly-suite/silly-cache": [
         "packages/publishable/silly-cache/src/index.ts"
       ],

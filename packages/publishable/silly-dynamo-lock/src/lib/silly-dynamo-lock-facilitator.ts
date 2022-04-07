@@ -45,17 +45,17 @@ export class SillyDynamoLockFacilitator
     lockKey: DynamoKeyValue,
     executeCriticalSection: () => Promise<V>
   ): Promise<V> {
-    const lockItem = await this.acquireLock(lockKey);
+    let lockItem = await this.acquireLock(lockKey, 0);
     let isReleased = false;
     const maintainLock = async (previousRecordVersionNumber: string) => {
       await sleep(this.config.heartbeatInterval);
       if (!isReleased) {
         try {
-          const updatedLockItem = await this.leaseExistingLockItem(
+          lockItem = await this.leaseExistingLockItem(
             lockKey,
             previousRecordVersionNumber
           );
-          maintainLock(updatedLockItem.recordVersionNumber);
+          await maintainLock(lockItem.recordVersionNumber);
         } catch (e) {
           //heartbeat failed, possibility that another method invocation will execute critical section at same time as this method invocation
         }
@@ -67,18 +67,18 @@ export class SillyDynamoLockFacilitator
       result = await executeCriticalSection();
     } finally {
       isReleased = true;
-      this.releaseLockItem(lockKey, lockItem.recordVersionNumber);
+      await this.releaseLockItem(lockKey, lockItem.recordVersionNumber);
     }
     return result;
   }
 
   private async acquireLock(
     lockKey: DynamoKeyValue,
-    attempt = 0
+    attempt: number
   ): Promise<NormalizedLockItem> {
     if (attempt < this.config.maxAttemptsToAcquireLock) {
-      const currentLockItem = await this.getLockItem(lockKey);
       try {
+        const currentLockItem = await this.getLockItem(lockKey);
         let newLockItem: NormalizedLockItem;
         if (currentLockItem) {
           await sleep(currentLockItem.leaseDuration);
@@ -92,7 +92,7 @@ export class SillyDynamoLockFacilitator
         return newLockItem;
       } catch (e) {
         if (e instanceof ConditionalCheckFailedException) {
-          return await this.acquireLock(lockKey, attempt++);
+          return await this.acquireLock(lockKey, attempt + 1);
         }
         throw e;
       }
@@ -131,7 +131,7 @@ export class SillyDynamoLockFacilitator
         leaseDuration: this.releasedLockLeaseDuration,
         recordVersionNumber: previousRecordVersionNumber,
       });
-    } catch {
+    } catch (e) {
       //release failed, other method invocations may wait a bit longer than normal to acquire lock
     }
   }
