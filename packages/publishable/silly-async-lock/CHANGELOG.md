@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.0.0](https://github.com/jcprice12/silly-suite/compare/v2.0.5...v3.0.0) (2022-04-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* "publishable-silly-async-lock" is no longer a thing
+
+### Features
+
+* renamed silly async lock package ([fbc08b7](https://github.com/jcprice12/silly-suite/commit/fbc08b703052fcbdd7673245f54b2a68bb112b33))
+
+
+
 ## [2.0.0](https://github.com/jcprice12/silly-suite/compare/v1.0.1...v2.0.0) (2022-04-03)
 
 
