@@ -9,6 +9,8 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { SillyLockFacilitator } from '@silly-suite/silly-lock';
 import { sleep } from '@silly-suite/silly-sleep';
 import { pick } from 'lodash';
+import { from, Observable, of } from 'rxjs';
+import { delay, mergeMap, retryWhen, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AllowedDynamoKeyType,
@@ -99,6 +101,44 @@ export class SillyDynamoLockFacilitator
     }
     throw new LockAcquisitionAttemptsExhaustedError();
   }
+
+  // private acquireLock_v2(
+  //   lockKey: DynamoKeyValue
+  // ): Observable<NormalizedLockItem> {
+  //   let attempts = 0;
+  //   return of(null).pipe(
+  //     tap(() => {
+  //       if (attempts >= this.config.maxAttemptsToAcquireLock) {
+  //         throw new LockAcquisitionAttemptsExhaustedError();
+  //       }
+  //     }),
+  //     tap(() => (attempts += 1)),
+  //     mergeMap(() => this.getLockItem(lockKey)),
+  //     mergeMap((currentLockItem) => {
+  //       if (currentLockItem) {
+  //         return of(currentLockItem).pipe(
+  //           delay(currentLockItem.leaseDuration),
+  //           mergeMap((currentLockItem) =>
+  //             this.leaseExistingLockItem(
+  //               lockKey,
+  //               currentLockItem.recordVersionNumber
+  //             )
+  //           )
+  //         );
+  //       }
+  //       return from(this.leaseNewLockItem(lockKey));
+  //     }),
+  //     retryWhen((errors: Observable<Error>) =>
+  //       errors.pipe(
+  //         tap((error) => {
+  //           if (!(error instanceof ConditionalCheckFailedException)) {
+  //             throw error;
+  //           }
+  //         })
+  //       )
+  //     )
+  //   );
+  // }
 
   private async getLockItem(
     lockKey: DynamoKeyValue

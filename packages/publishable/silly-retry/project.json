@@ -1,0 +1,32 @@
+{
+  "root": "packages/publishable/silly-retry",
+  "sourceRoot": "packages/publishable/silly-retry/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/publishable/silly-retry",
+        "main": "packages/publishable/silly-retry/src/index.ts",
+        "tsConfig": "packages/publishable/silly-retry/tsconfig.lib.json",
+        "assets": ["packages/publishable/silly-retry/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/publishable/silly-retry/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/publishable/silly-retry"],
+      "options": {
+        "jestConfig": "packages/publishable/silly-retry/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

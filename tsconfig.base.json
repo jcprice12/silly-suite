@@ -33,6 +33,9 @@
       "@silly-suite/silly-node-cache": [
         "packages/publishable/silly-node-cache/src/index.ts"
       ],
+      "@silly-suite/silly-retry": [
+        "packages/publishable/silly-retry/src/index.ts"
+      ],
       "@silly-suite/silly-sleep": [
         "packages/publishable/silly-sleep/src/index.ts"
       ]
