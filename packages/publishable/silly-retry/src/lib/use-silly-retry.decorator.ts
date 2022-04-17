@@ -1,4 +1,6 @@
 import { sleep } from '@silly-suite/silly-sleep';
+import { isObservable, Observable } from 'rxjs';
+import { delay, retryWhen, tap } from 'rxjs/operators';
 import { BackoffStrategy, FixedBackoffStrategy } from './backoff.strategy';
 import { AlwaysRetry, RetryCondition } from './retry.condition';
 
@@ -8,9 +10,7 @@ export interface RetryDecoratorOptions<E> {
   retryCondition?: RetryCondition<E>;
 }
 
-export function UseSillyRetryForPromise<E>(
-  options: RetryDecoratorOptions<E> = {}
-) {
+export function UseSillyRetry<E>(options: RetryDecoratorOptions<E> = {}) {
   const finalOpts: Required<RetryDecoratorOptions<E>> =
     finalizeOptions(options);
   return function (
@@ -20,36 +20,71 @@ export function UseSillyRetryForPromise<E>(
   ) {
     descriptor.value = new Proxy(descriptor.value, {
       apply: function (original, thisArg: unknown, args: unknown[]) {
-        async function executeMethod(
-          attemptsLeft: number,
-          attemptsMade: number,
-          lastError: E | null
+        function isAllowedToMakeAnotherAttempt(attemptsMade: number, error: E) {
+          return (
+            attemptsMade <= finalOpts.retryAttempts &&
+            finalOpts.retryCondition.shouldRetry(error)
+          );
+        }
+
+        async function executeMethodAsPromise<T>(
+          promise: Promise<T>,
+          attemptsMade: number
         ): Promise<unknown> {
-          if (
-            attemptsLeft <= 0 ||
-            (lastError && !finalOpts.retryCondition.shouldRetry(lastError))
-          ) {
-            throw lastError;
-          }
-          if (attemptsMade > 0) {
-            await sleep(
-              finalOpts.backoffStrategy.getNextBackoffAmount(attemptsMade)
-            );
-          }
           try {
-            return await original.apply(thisArg, args);
+            return await promise;
           } catch (e) {
             const error: E = e as E;
-            return executeMethod(attemptsLeft - 1, attemptsMade + 1, error);
+            attemptsMade += 1;
+            if (isAllowedToMakeAnotherAttempt(attemptsMade, error)) {
+              await sleep(
+                finalOpts.backoffStrategy.getNextBackoffAmount(attemptsMade)
+              );
+              return executeMethodAsPromise(
+                original.apply(thisArg, args),
+                attemptsMade
+              );
+            }
+            throw e;
           }
         }
-        return executeMethod(finalOpts.retryAttempts + 1, 0, null);
+
+        function executeMethodAsObservable<T>(
+          val: Observable<T>
+        ): Observable<T> {
+          let attemptsMade = 0;
+          return val.pipe(
+            retryWhen((errors) => {
+              return errors.pipe(
+                tap(() => {
+                  attemptsMade += 1;
+                }),
+                tap((error: E) => {
+                  if (!isAllowedToMakeAnotherAttempt(attemptsMade, error)) {
+                    throw error;
+                  }
+                }),
+                delay(
+                  finalOpts.backoffStrategy.getNextBackoffAmount(attemptsMade)
+                )
+              );
+            })
+          );
+        }
+
+        const val = original.apply(thisArg, args);
+        if (isPromise(val)) {
+          return executeMethodAsPromise(val, 0);
+        } else if (isObservable(val)) {
+          return executeMethodAsObservable(val);
+        }
+        return val;
       },
     });
   };
 }
 
-function resolveOption<T>(option: T | undefined, defaultOption: T): T {
+function finalizeOption<T>(option: T | undefined, defaultOption: T): T {
   return option ?? defaultOption;
 }
 
@@ -57,11 +92,18 @@ function finalizeOptions<E>(
   opts: RetryDecoratorOptions<E>
 ): Required<RetryDecoratorOptions<E>> {
   return {
-    retryAttempts: resolveOption(opts.retryAttempts, 2),
-    backoffStrategy: resolveOption(
+    retryAttempts: finalizeOption(opts.retryAttempts, 2),
+    backoffStrategy: finalizeOption(
       opts.backoffStrategy,
       new FixedBackoffStrategy(0)
     ),
-    retryCondition: resolveOption(opts.retryCondition, new AlwaysRetry()),
+    retryCondition: finalizeOption(opts.retryCondition, new AlwaysRetry()),
   };
+}
+
+function isPromise<T>(val: unknown): val is Promise<T> {
+  if (typeof (val as Promise<T>).then === 'function') {
+    return true;
+  }
+  return false;
 }
