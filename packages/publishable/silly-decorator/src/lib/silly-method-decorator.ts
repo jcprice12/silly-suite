@@ -1,10 +1,10 @@
-export interface DecoratedMethodData<C, A, T> {
-  thiz: C;
-  args: A;
-  target: T;
+export interface DecoratedMethodData {
+  thiz: any;
+  args: any;
+  target: any;
   propertyKey: string;
 }
 
-export type DecoratedMethodParamFactory<P, C, A, T> = (
-  data: DecoratedMethodData<C, A, T>
+export type DecoratedMethodParamFactory<P> = (
+  data: DecoratedMethodData
 ) => P;

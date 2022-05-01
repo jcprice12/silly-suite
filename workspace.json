@@ -6,6 +6,7 @@
     "silly-decorator": "packages/publishable/silly-decorator",
     "silly-dynamo-lock": "packages/publishable/silly-dynamo-lock",
     "silly-lock": "packages/publishable/silly-lock",
+    "silly-logging": "packages/publishable/silly-logging",
     "silly-node-cache": "packages/publishable/silly-node-cache",
     "silly-retry": "packages/publishable/silly-retry",
     "silly-sleep": "packages/publishable/silly-sleep"

@@ -1,22 +1,22 @@
 import { DecoratedMethodParamFactory } from '@silly-suite/silly-decorator';
 import { SillyCache } from './silly-cache';
 
-export function UseSillyCacheForPromise<K, C, A, T>(
-  getSillyCache: DecoratedMethodParamFactory<SillyCache<K>, C, A, T>,
-  getSillyCacheKey: DecoratedMethodParamFactory<K, C, A, T>
+export function UseSillyCacheForPromise<K>(
+  getSillyCache: DecoratedMethodParamFactory<SillyCache<K>>,
+  getSillyCacheKey: DecoratedMethodParamFactory<K>
 ) {
   return function (
-    target: T,
+    target: unknown,
     propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     descriptor.value = new Proxy(descriptor.value, {
-      apply: async function (original, thiz: C, args: Array<A>) {
+      apply: async function (original, thiz: unknown, args: Array<unknown>) {
         const decoratedMethodData = {
           thiz,
           target,
           propertyKey,
-          args: args as unknown as A,
+          args,
         };
         const cache = getSillyCache(decoratedMethodData);
         const cacheKey = getSillyCacheKey(decoratedMethodData);

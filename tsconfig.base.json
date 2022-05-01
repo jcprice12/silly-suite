@@ -30,6 +30,9 @@
       "@silly-suite/silly-lock": [
         "packages/publishable/silly-lock/src/index.ts"
       ],
+      "@silly-suite/silly-logging": [
+        "packages/publishable/silly-logging/src/index.ts"
+      ],
       "@silly-suite/silly-node-cache": [
         "packages/publishable/silly-node-cache/src/index.ts"
       ],
