@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [5.0.0](https://github.com/jcprice12/silly-suite/compare/v4.1.1...v5.0.0) (2022-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* LogPromise is removed as well as "wouldLikeToAwait" option
+
+### Features
+
+* silly logger handles observables ([707514e](https://github.com/jcprice12/silly-suite/commit/707514e904fa4619c593b064164156be7b198742))
+
+
+
 ### [4.1.1](https://github.com/jcprice12/silly-suite/compare/v4.1.0...v4.1.1) (2022-05-08)
 
 **Note:** Version bump only for package silly-suite

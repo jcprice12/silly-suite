@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [5.0.0](https://github.com/jcprice12/silly-suite/compare/v4.1.1...v5.0.0) (2022-05-08)
+
+**Note:** Version bump only for package @silly-suite/silly-lock
+
+
+
+
+
 ## [4.0.0](https://github.com/jcprice12/silly-suite/compare/v3.2.0...v4.0.0) (2022-05-01)
 
 
