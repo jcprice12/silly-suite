@@ -1,3 +1,4 @@
+import { isPromise } from '@silly-suite/silly-promise-check';
 import { sleep } from '@silly-suite/silly-sleep';
 import { isObservable, Observable } from 'rxjs';
 import { delay, retryWhen, tap } from 'rxjs/operators';
@@ -99,11 +100,4 @@ function finalizeOptions<E>(
     ),
     retryCondition: finalizeOption(opts.retryCondition, new AlwaysRetry()),
   };
-}
-
-function isPromise<T>(val: unknown): val is Promise<T> {
-  if (typeof (val as Promise<T>).then === 'function') {
-    return true;
-  }
-  return false;
 }
