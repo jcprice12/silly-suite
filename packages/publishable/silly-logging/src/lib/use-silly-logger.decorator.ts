@@ -1,4 +1,7 @@
 import { DecoratedMethodParamFactory } from '@silly-suite/silly-decorator';
+import { isPromise } from '@silly-suite/silly-promise-check';
+import { isObservable } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { SillyLogAttribute } from './silly-log-attribute';
 import { SillyLogAttributeFactory } from './silly-log-attribute.factory';
 import { SillyLogger } from './silly-logger';
@@ -54,7 +57,7 @@ export type LogOnErrorOptions = {
   argMappings?: Array<SillyLogMapping>;
   errorMapping?: SillyLogMapping;
   errorMessage?: string;
-  wouldLikeToAwait?: boolean;
+  shouldWait?: boolean;
 };
 export function LogOnError(
   getLogger: DecoratedMethodParamFactory<SillyLogger>,
@@ -72,7 +75,7 @@ export function LogOnError(
       options.errorMessage,
       'unsuccessful method execution'
     ),
-    wouldLikeToAwait: finalizeOption(options.wouldLikeToAwait, false),
+    shouldWait: finalizeOption(options.shouldWait, false),
   };
   return function (
     target: Target,
@@ -108,12 +111,15 @@ export function LogOnError(
         }
         try {
           const result = original.apply(thiz, args);
-          return shouldAwaitAction(finalOptions.wouldLikeToAwait, result)
-            ? result.then(
-                (valToResolve: unknown) => valToResolve,
-                (e: unknown) => onFailure(e)
-              )
-            : result;
+          if (finalOptions.shouldWait && isPromise(result)) {
+            return result.then(
+              (valToResolve: unknown) => valToResolve,
+              (e: unknown) => onFailure(e)
+            );
+          } else if (finalOptions.shouldWait && isObservable(result)) {
+            return result.pipe(catchError((e) => onFailure(e) as never));
+          }
+          return result;
         } catch (e) {
           onFailure(e);
         }
@@ -126,7 +132,7 @@ export type LogOnResultOptions = {
   argMappings?: Array<SillyLogMapping>;
   resultMapping?: SillyLogMapping;
   successMessage?: string;
-  wouldLikeToAwait?: boolean;
+  shouldWait?: boolean;
 };
 export function LogOnResult(
   getLogger: DecoratedMethodParamFactory<SillyLogger>,
@@ -141,7 +147,7 @@ export function LogOnResult(
       options.successMessage,
       'successful method execution'
     ),
-    wouldLikeToAwait: finalizeOption(options.wouldLikeToAwait, false),
+    shouldWait: finalizeOption(options.shouldWait, false),
   };
   return function (
     target: Target,
@@ -176,16 +182,20 @@ export function LogOnResult(
           return result;
         }
         const result = original.apply(thiz, args);
-        return shouldAwaitAction(finalOptions.wouldLikeToAwait, result)
-          ? result.then((valToResolve: unknown) => onSuccess(valToResolve))
-          : onSuccess(result as unknown);
+        if (finalOptions.shouldWait && isPromise(result)) {
+          return result.then((val: unknown) => onSuccess(val));
+        } else if (finalOptions.shouldWait && isObservable(result)) {
+          return result.pipe(tap((val: unknown) => onSuccess(val)));
+        } else {
+          return onSuccess(result);
+        }
       },
     });
   };
 }
 
 export type LogDecoratorOptions = {
-  wouldLikeToAwait?: boolean;
+  shouldWait?: boolean;
   arrivalMessage?: string;
   argMappings?: Array<SillyLogMapping>;
   resultMapping?: SillyLogMapping;
@@ -211,11 +221,11 @@ export function Log(
   };
 }
 
-export function LogPromise(
+export function LogAfterAsyncBehavior(
   getLogger: DecoratedMethodParamFactory<SillyLogger>,
-  options: Omit<LogDecoratorOptions, 'wouldLikeToAwait'> = {}
+  options: Omit<LogDecoratorOptions, 'shouldWait'> = {}
 ) {
-  return Log(getLogger, { ...options, wouldLikeToAwait: true });
+  return Log(getLogger, { ...options, shouldWait: true });
 }
 
 function finalizeOption<T>(option: unknown, defaultVal: unknown): T {
@@ -258,15 +268,4 @@ function mapArgsToLogAttributes(
   return args.map((arg, index) =>
     mapToLogAttribute(arg, argMappings[index] ?? `arg${index + 1}`)
   );
-}
-
-function isPromise(value: unknown): value is Promise<unknown> {
-  if (typeof (value as Promise<unknown>).then === 'function') {
-    return true;
-  }
-  return false;
-}
-
-function shouldAwaitAction(wouldLikeToAwait: boolean, value: unknown): boolean {
-  return wouldLikeToAwait && isPromise(value);
 }

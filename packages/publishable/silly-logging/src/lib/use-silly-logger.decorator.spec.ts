@@ -1,10 +1,12 @@
+import { Observable, of, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SillyLogger } from './silly-logger';
 import {
   Log,
+  LogAfterAsyncBehavior,
   LogOnArrival,
   LogOnError,
   LogOnResult,
-  LogPromise,
 } from './use-silly-logger.decorator';
 
 function createLogAttribute(name: string, value: unknown) {
@@ -55,6 +57,55 @@ describe('Given logger', () => {
         arb: 'hello',
       };
       arbitraryInstance = new ArbitraryClass('hi');
+    });
+
+    describe('Given static method that is decorated', () => {
+      const thingToReturn = 'yooo';
+      class ClassToTest {
+        @LogOnArrival(logRetriever)
+        static testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): string {
+          return thingToReturn;
+        }
+      }
+
+      describe('When invoking method', () => {
+        let result: string;
+        beforeEach(() => {
+          result = ClassToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated', () => {
+          expect(infoSpy).toHaveBeenCalledWith(
+            'method invoked',
+            createLogAttribute('class', 'ClassToTest'),
+            createLogAttribute('method', 'testLogging'),
+            createLogAttribute('arg1', arbitraryString),
+            createLogAttribute('arg2', arbitraryNumber),
+            createLogAttribute('arg3', arbitraryBoolean),
+            createLogAttribute('arg4', arbitraryFunction),
+            createLogAttribute('arg5', arbitraryInstance),
+            createLogAttribute('arg6', arbitraryObj)
+          );
+        });
+
+        it('Then original return value is returned', () => {
+          expect(result).toBe(thingToReturn);
+        });
+      });
     });
 
     describe('Given default LogOnArrival options', () => {
@@ -474,11 +525,11 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would like to await for non-promise-returning method decorated with LogOnResult', () => {
+    describe('Given would like to wait for non-promise-returning method decorated with LogOnResult', () => {
       class ClassToTest {
         constructor(private readonly classField: string) {}
         @LogOnResult(logRetriever, {
-          wouldLikeToAwait: true,
+          shouldWait: true,
         })
         testLogging(
           _p1: string,
@@ -533,11 +584,11 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would like to await for promise-returning method decorated with LogOnResult', () => {
+    describe('Given would like to wait for promise-returning method decorated with LogOnResult', () => {
       class ClassToTest {
         constructor(private readonly classField: string) {}
         @LogOnResult(logRetriever, {
-          wouldLikeToAwait: true,
+          shouldWait: true,
         })
         testLogging(
           _p1: string,
@@ -592,11 +643,76 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would not like to await for promise-returning method decorated with LogOnResult', () => {
+    describe('Given would like to wait for observable-returning method decorated with LogOnResult', () => {
       class ClassToTest {
         constructor(private readonly classField: string) {}
         @LogOnResult(logRetriever, {
-          wouldLikeToAwait: false, //default but making clear for purpose of test
+          shouldWait: true,
+        })
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<string> {
+          return of(this.classField);
+        }
+      }
+
+      let constructorArg: string;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        constructorArg = 'yooo';
+        classToTest = new ClassToTest(constructorArg);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<string>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated after observable completes', (done) => {
+          obs.subscribe((result) => {
+            expect(infoSpy).toHaveBeenCalledWith(
+              'successful method execution',
+              createLogAttribute('result', result),
+              createLogAttribute('class', 'ClassToTest'),
+              createLogAttribute('method', 'testLogging'),
+              createLogAttribute('arg1', arbitraryString),
+              createLogAttribute('arg2', arbitraryNumber),
+              createLogAttribute('arg3', arbitraryBoolean),
+              createLogAttribute('arg4', arbitraryFunction),
+              createLogAttribute('arg5', arbitraryInstance),
+              createLogAttribute('arg6', arbitraryObj)
+            );
+            done();
+          });
+        });
+
+        it('Then original return value is yielded', (done) => {
+          obs.subscribe((result) => {
+            expect(result).toBe(constructorArg);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('Given would not like to wait for promise-returning method decorated with LogOnResult', () => {
+      class ClassToTest {
+        constructor(private readonly classField: string) {}
+        @LogOnResult(logRetriever, {
+          shouldWait: false, //default but making clear for purpose of test
         })
         testLogging(
           _p1: string,
@@ -648,6 +764,68 @@ describe('Given logger', () => {
         it('Then promise returned and value can be resolved', () => {
           return result.then((val) => {
             expect(val).toBe(constructorArg);
+          });
+        });
+      });
+    });
+
+    describe('Given would not like to wait for observable-returning method decorated with LogOnResult', () => {
+      class ClassToTest {
+        constructor(private readonly classField: string) {}
+        @LogOnResult(logRetriever, {
+          shouldWait: false, //default but making clear for purpose of test
+        })
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<string> {
+          return of(this.classField);
+        }
+      }
+
+      let constructorArg: string;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        constructorArg = 'yooo';
+        classToTest = new ClassToTest(constructorArg);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<string>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated after observable completes', () => {
+          expect(infoSpy).toHaveBeenCalledWith(
+            'successful method execution',
+            createLogAttribute('result', obs),
+            createLogAttribute('class', 'ClassToTest'),
+            createLogAttribute('method', 'testLogging'),
+            createLogAttribute('arg1', arbitraryString),
+            createLogAttribute('arg2', arbitraryNumber),
+            createLogAttribute('arg3', arbitraryBoolean),
+            createLogAttribute('arg4', arbitraryFunction),
+            createLogAttribute('arg5', arbitraryInstance),
+            createLogAttribute('arg6', arbitraryObj)
+          );
+        });
+
+        it('Then original return value is yielded', (done) => {
+          obs.subscribe((result) => {
+            expect(result).toBe(constructorArg);
+            done();
           });
         });
       });
@@ -907,11 +1085,11 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would like to await for non-promise-returning method decorated with LogOnError', () => {
+    describe('Given would like to wait for non-promise-returning method decorated with LogOnError', () => {
       class ClassToTest {
         constructor(private readonly error: Error) {}
         @LogOnError(logRetriever, {
-          wouldLikeToAwait: true,
+          shouldWait: true,
         })
         testLogging(
           _p1: string,
@@ -950,6 +1128,7 @@ describe('Given logger', () => {
         });
 
         it('Then correct log is generated', () => {
+          expect(errorSpy).toHaveBeenCalledTimes(1);
           expect(errorSpy).toHaveBeenCalledWith(
             'unsuccessful method execution',
             createLogAttribute('error', thrownError.message),
@@ -970,11 +1149,11 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would like to await for promise-returning method decorated with LogOnError', () => {
+    describe('Given would like to wait for promise-returning method decorated with LogOnError', () => {
       class ClassToTest {
         constructor(private readonly error: Error) {}
         @LogOnError(logRetriever, {
-          wouldLikeToAwait: true,
+          shouldWait: true,
         })
         testLogging(
           _p1: string,
@@ -1013,6 +1192,7 @@ describe('Given logger', () => {
         });
 
         it('Then correct log is generated', () => {
+          expect(errorSpy).toHaveBeenCalledTimes(1);
           expect(errorSpy).toHaveBeenCalledWith(
             'unsuccessful method execution',
             createLogAttribute('error', thrownError.message),
@@ -1033,11 +1213,87 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given would not like to await for promise-returning method decorated with LogOnError', () => {
+    describe('Given would like to wait for observable-returning method decorated with LogOnError', () => {
       class ClassToTest {
         constructor(private readonly error: Error) {}
         @LogOnError(logRetriever, {
-          wouldLikeToAwait: false,
+          shouldWait: true,
+        })
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<never> {
+          return throwError(this.error);
+        }
+      }
+
+      let errorToThrow: Error;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        errorToThrow = new Error('err');
+        classToTest = new ClassToTest(errorToThrow);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<never>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated after observable completes', (done) => {
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            (err) => {
+              expect(errorSpy).toHaveBeenCalledTimes(1);
+              expect(errorSpy).toHaveBeenCalledWith(
+                'unsuccessful method execution',
+                createLogAttribute('error', err.message),
+                createLogAttribute('class', 'ClassToTest'),
+                createLogAttribute('method', 'testLogging'),
+                createLogAttribute('arg1', arbitraryString),
+                createLogAttribute('arg2', arbitraryNumber),
+                createLogAttribute('arg3', arbitraryBoolean),
+                createLogAttribute('arg4', arbitraryFunction),
+                createLogAttribute('arg5', arbitraryInstance),
+                createLogAttribute('arg6', arbitraryObj)
+              );
+              done();
+            }
+          );
+        });
+
+        it('Then original error is thrown', (done) => {
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            (err) => {
+              expect(err).toBe(errorToThrow);
+              done();
+            }
+          );
+        });
+      });
+    });
+
+    describe('Given would not like to wait for promise-returning method decorated with LogOnError', () => {
+      class ClassToTest {
+        constructor(private readonly error: Error) {}
+        @LogOnError(logRetriever, {
+          shouldWait: false,
         })
         testLogging(
           _p1: string,
@@ -1083,6 +1339,70 @@ describe('Given logger', () => {
           } catch (e) {
             expect(e).toBe(errorToThrow);
           }
+        });
+      });
+    });
+
+    describe('Given would not like to wait for observable-returning method decorated with LogOnError', () => {
+      class ClassToTest {
+        constructor(private readonly error: Error) {}
+        @LogOnError(logRetriever, {
+          shouldWait: false,
+        })
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<never> {
+          return throwError(this.error);
+        }
+      }
+
+      let errorToThrow: Error;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        errorToThrow = new Error('err');
+        classToTest = new ClassToTest(errorToThrow);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<never>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then no log is generated', (done) => {
+          expect(errorSpy).not.toHaveBeenCalled();
+          obs.pipe(catchError((e) => e)).subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            () => {
+              done();
+            }
+          );
+        });
+
+        it('Then original error is thrown', (done) => {
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            (err) => {
+              expect(err).toBe(errorToThrow);
+              done();
+            }
+          );
         });
       });
     });
@@ -1233,10 +1553,10 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given method decorated with LogPromise that will resolve', () => {
+    describe('Given method decorated with LogAfterAsyncBehavior that returns a promise that will resolve', () => {
       class ClassToTest {
         constructor(private readonly classField: string) {}
-        @LogPromise(logRetriever)
+        @LogAfterAsyncBehavior(logRetriever)
         testLogging(
           _p1: string,
           _p2: number,
@@ -1304,10 +1624,10 @@ describe('Given logger', () => {
       });
     });
 
-    describe('Given method decorated with LogPromise that will reject', () => {
+    describe('Given method decorated with LogAfterAsyncBehavior that returns a promise that will reject', () => {
       class ClassToTest {
         constructor(private readonly error: Error) {}
-        @LogPromise(logRetriever)
+        @LogAfterAsyncBehavior(logRetriever)
         testLogging(
           _p1: string,
           _p2: number,
@@ -1359,6 +1679,7 @@ describe('Given logger', () => {
         });
 
         it('Then correct log is generated after promise rejects', () => {
+          expect(errorSpy).toHaveBeenCalledTimes(1);
           expect(errorSpy).toHaveBeenCalledWith(
             'unsuccessful method execution',
             createLogAttribute('error', thrownError.message),
@@ -1375,6 +1696,182 @@ describe('Given logger', () => {
 
         it('Then original error is rejected', () => {
           expect(thrownError).toBe(errorToThrow);
+        });
+      });
+    });
+
+    describe('Given method decorated with LogAfterAsyncBehavior that returns an observable that will complete successfully', () => {
+      class ClassToTest {
+        constructor(private readonly classField: string) {}
+        @LogAfterAsyncBehavior(logRetriever)
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<string> {
+          return of(this.classField);
+        }
+      }
+
+      let constructorArg: string;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        constructorArg = 'yooo';
+        classToTest = new ClassToTest(constructorArg);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<string>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated on arrival', (done) => {
+          expect(infoSpy).toHaveBeenCalledWith(
+            'method invoked',
+            createLogAttribute('class', 'ClassToTest'),
+            createLogAttribute('method', 'testLogging'),
+            createLogAttribute('arg1', arbitraryString),
+            createLogAttribute('arg2', arbitraryNumber),
+            createLogAttribute('arg3', arbitraryBoolean),
+            createLogAttribute('arg4', arbitraryFunction),
+            createLogAttribute('arg5', arbitraryInstance),
+            createLogAttribute('arg6', arbitraryObj)
+          );
+          obs.subscribe(() => {
+            done();
+          });
+        });
+
+        it('Then correct log is generated after observable completes', (done) => {
+          obs.subscribe((result) => {
+            expect(infoSpy).toHaveBeenCalledWith(
+              'successful method execution',
+              createLogAttribute('result', result),
+              createLogAttribute('class', 'ClassToTest'),
+              createLogAttribute('method', 'testLogging'),
+              createLogAttribute('arg1', arbitraryString),
+              createLogAttribute('arg2', arbitraryNumber),
+              createLogAttribute('arg3', arbitraryBoolean),
+              createLogAttribute('arg4', arbitraryFunction),
+              createLogAttribute('arg5', arbitraryInstance),
+              createLogAttribute('arg6', arbitraryObj)
+            );
+            done();
+          });
+        });
+
+        it('Then original return value is yielded', (done) => {
+          obs.subscribe((result) => {
+            expect(result).toBe(constructorArg);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('Given method decorated with LogAfterAsyncBehavior that returns an observable that will not complete successfully', () => {
+      class ClassToTest {
+        constructor(private readonly error: Error) {}
+        @LogAfterAsyncBehavior(logRetriever)
+        testLogging(
+          _p1: string,
+          _p2: number,
+          _p3: boolean,
+          _p4: (arb: string) => string,
+          _p5: ArbitraryClass,
+          _p6: ArbitraryInterface
+        ): Observable<never> {
+          return throwError(this.error);
+        }
+      }
+
+      let errorToThrow: Error;
+      let classToTest: ClassToTest;
+      beforeEach(() => {
+        errorToThrow = new Error('err');
+        classToTest = new ClassToTest(errorToThrow);
+      });
+
+      describe('When invoking method', () => {
+        let obs: Observable<never>;
+        beforeEach(() => {
+          obs = classToTest.testLogging(
+            arbitraryString,
+            arbitraryNumber,
+            arbitraryBoolean,
+            arbitraryFunction,
+            arbitraryInstance,
+            arbitraryObj
+          );
+        });
+
+        it('Then correct log is generated on arrival', (done) => {
+          expect(infoSpy).toHaveBeenCalledWith(
+            'method invoked',
+            createLogAttribute('class', 'ClassToTest'),
+            createLogAttribute('method', 'testLogging'),
+            createLogAttribute('arg1', arbitraryString),
+            createLogAttribute('arg2', arbitraryNumber),
+            createLogAttribute('arg3', arbitraryBoolean),
+            createLogAttribute('arg4', arbitraryFunction),
+            createLogAttribute('arg5', arbitraryInstance),
+            createLogAttribute('arg6', arbitraryObj)
+          );
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            () => {
+              done();
+            }
+          );
+        });
+
+        it('Then correct log is generated after observable completes', (done) => {
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            (err) => {
+              expect(errorSpy).toHaveBeenCalledTimes(1);
+              expect(errorSpy).toHaveBeenCalledWith(
+                'unsuccessful method execution',
+                createLogAttribute('error', err.message),
+                createLogAttribute('class', 'ClassToTest'),
+                createLogAttribute('method', 'testLogging'),
+                createLogAttribute('arg1', arbitraryString),
+                createLogAttribute('arg2', arbitraryNumber),
+                createLogAttribute('arg3', arbitraryBoolean),
+                createLogAttribute('arg4', arbitraryFunction),
+                createLogAttribute('arg5', arbitraryInstance),
+                createLogAttribute('arg6', arbitraryObj)
+              );
+              done();
+            }
+          );
+        });
+
+        it('Then original error is thrown', (done) => {
+          obs.subscribe(
+            () => {
+              fail('observable should emit error');
+            },
+            (err) => {
+              expect(err).toBe(errorToThrow);
+              done();
+            }
+          );
         });
       });
     });
