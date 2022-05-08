@@ -1,0 +1,32 @@
+{
+  "root": "packages/publishable/silly-promise-check",
+  "sourceRoot": "packages/publishable/silly-promise-check/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/publishable/silly-promise-check",
+        "main": "packages/publishable/silly-promise-check/src/index.ts",
+        "tsConfig": "packages/publishable/silly-promise-check/tsconfig.lib.json",
+        "assets": ["packages/publishable/silly-promise-check/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/publishable/silly-promise-check/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/publishable/silly-promise-check"],
+      "options": {
+        "jestConfig": "packages/publishable/silly-promise-check/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
