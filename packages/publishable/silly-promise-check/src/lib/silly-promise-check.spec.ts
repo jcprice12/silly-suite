@@ -7,11 +7,15 @@ function is_promise(expected: boolean) {
 }
 
 describe.each`
-  val                              | type          | expectation
-  ${new Promise<void>((r) => r())} | ${'promise'}  | ${is_promise(true)}
-  ${42}                            | ${'number'}   | ${is_promise(false)}
-  ${() => 42}                      | ${'function'} | ${is_promise(false)}
-  ${{ foo: 'bar' }}                | ${'object'}   | ${is_promise(false)}
+  val                              | type           | expectation
+  ${new Promise<void>((r) => r())} | ${'promise'}   | ${is_promise(true)}
+  ${42}                            | ${'number'}    | ${is_promise(false)}
+  ${() => 42}                      | ${'function'}  | ${is_promise(false)}
+  ${{ foo: 'bar' }}                | ${'object'}    | ${is_promise(false)}
+  ${undefined}                     | ${'undefined'} | ${is_promise(false)}
+  ${null}                          | ${'undefined'} | ${is_promise(false)}
+  ${true}                          | ${'boolean'}   | ${is_promise(false)}
+  ${'str'}                         | ${'string'}    | ${is_promise(false)}
 `('Given value of type "$type"', ({ val, expectation }) => {
   describe('When checking if it is a promise', () => {
     let result: boolean;
