@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.0.0](https://github.com/jcprice12/silly-suite/compare/v5.0.1...v6.0.0) (2022-05-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* silly cache interface removed. cache implementations must reject/throw
+SillyCacheMissError on cache miss
+
+### Features
+
+* redefined silly cache interface to be either promise-based or observable-based ([1aa5ec6](https://github.com/jcprice12/silly-suite/commit/1aa5ec6dde981473c33a9337cb40ba63b3247285))
+
+
+
 ## [5.0.0](https://github.com/jcprice12/silly-suite/compare/v4.1.1...v5.0.0) (2022-05-08)
 
 **Note:** Version bump only for package @silly-suite/silly-cache
