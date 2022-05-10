@@ -1,8 +1,8 @@
 import { DecoratedMethodParamFactory } from '@silly-suite/silly-decorator';
-import { SillyCache } from './silly-cache';
+import { SillyPromiseCache } from './silly-cache';
 
 export function UseSillyCacheForPromise<K>(
-  getSillyCache: DecoratedMethodParamFactory<SillyCache<K>>,
+  getSillyCache: DecoratedMethodParamFactory<SillyPromiseCache<K>>,
   getSillyCacheKey: DecoratedMethodParamFactory<K>
 ) {
   return function (
@@ -20,18 +20,18 @@ export function UseSillyCacheForPromise<K>(
         };
         const cache = getSillyCache(decoratedMethodData);
         const cacheKey = getSillyCacheKey(decoratedMethodData);
-        const cachedVal = await cache.getCacheValue(cacheKey);
-        if (!isCacheMiss(cachedVal)) {
-          return cachedVal;
+        try {
+          return await cache.getCacheValue(cacheKey);
+        } catch {
+          const originalReturnValue = await original.apply(thiz, args);
+          try {
+            await cache.setCacheValue(cacheKey, originalReturnValue);
+          } catch {
+            //do nothing
+          }
+          return originalReturnValue;
         }
-        const originalReturnValue = await original.apply(thiz, args);
-        await cache.setCacheValue(cacheKey, originalReturnValue);
-        return originalReturnValue;
       },
     });
   };
-}
-
-function isCacheMiss(val: unknown): boolean {
-  return val === undefined || val === null;
 }
