@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [7.0.0](https://github.com/jcprice12/silly-suite/compare/v6.0.0...v7.0.0) (2022-05-14)
+
+**Note:** Version bump only for package @silly-suite/silly-logging
+
+
+
+
+
 ## [6.0.0](https://github.com/jcprice12/silly-suite/compare/v5.0.1...v6.0.0) (2022-05-10)
 
 **Note:** Version bump only for package @silly-suite/silly-logging
