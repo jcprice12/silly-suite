@@ -1,1 +1,1 @@
-export * from './lib/silly-node-promise-cache-wrapper';
+export * from './lib/silly-node-cache-wrapper';

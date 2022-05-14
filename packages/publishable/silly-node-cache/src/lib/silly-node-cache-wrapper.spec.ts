@@ -1,6 +1,6 @@
 import NodeCache = require('node-cache');
 import { SillyCacheMissError } from '@silly-suite/silly-cache';
-import { SillyNodePromiseCacheWrapper } from './silly-node-promise-cache-wrapper';
+import { SillyNodeCacheWrapper } from './silly-node-cache-wrapper';
 
 describe('Given a node cache', () => {
   let nodeCache: NodeCache;
@@ -9,17 +9,15 @@ describe('Given a node cache', () => {
   });
 
   describe('Given a silly node cache wrapper', () => {
-    let sillyNodePromiseCacheWrapper: SillyNodePromiseCacheWrapper;
+    let sillyNodeCacheWrapper: SillyNodeCacheWrapper;
     beforeEach(() => {
-      sillyNodePromiseCacheWrapper = new SillyNodePromiseCacheWrapper(
-        nodeCache
-      );
+      sillyNodeCacheWrapper = new SillyNodeCacheWrapper(nodeCache);
     });
 
     describe('When getting underlying cache', () => {
       let underlyingCache: NodeCache;
       beforeEach(() => {
-        underlyingCache = sillyNodePromiseCacheWrapper.underlyingCache;
+        underlyingCache = sillyNodeCacheWrapper.underlyingCache;
       });
 
       it('Then the underlying cache can be retrieved', () => {
@@ -30,9 +28,9 @@ describe('Given a node cache', () => {
     describe('When getting cache value before one is set', () => {
       let error: Error;
       const cacheKey = 'foo';
-      beforeEach(async () => {
+      beforeEach(() => {
         try {
-          await sillyNodePromiseCacheWrapper.getCacheValue(cacheKey);
+          sillyNodeCacheWrapper.getCacheValue(cacheKey);
         } catch (e) {
           error = e as Error;
         }
@@ -47,14 +45,14 @@ describe('Given a node cache', () => {
     describe('Given a value is set in silly node cache wrapper', () => {
       const cacheValue = 42;
       const cacheKey = 'foo';
-      beforeEach(async () => {
-        await sillyNodePromiseCacheWrapper.setCacheValue(cacheKey, cacheValue);
+      beforeEach(() => {
+        sillyNodeCacheWrapper.setCacheValue(cacheKey, cacheValue);
       });
 
       describe('When cached value is retrieved from silly node cache wrapper', () => {
         let result: number | undefined;
-        beforeEach(async () => {
-          result = await sillyNodePromiseCacheWrapper.getCacheValue(cacheKey);
+        beforeEach(() => {
+          result = sillyNodeCacheWrapper.getCacheValue(cacheKey);
         });
 
         it('Then the cached value is returned', () => {
