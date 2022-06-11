@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [7.1.0](https://github.com/jcprice12/silly-suite/compare/v7.0.0...v7.1.0) (2022-06-11)
+
+
+### Features
+
+* export SillyLogger interface ([373abb3](https://github.com/jcprice12/silly-suite/commit/373abb3fe6c8f979a66a917d5f3a014b5b8e7ce3))
+
+
+
 ## [7.0.0](https://github.com/jcprice12/silly-suite/compare/v6.0.0...v7.0.0) (2022-05-14)
 
 **Note:** Version bump only for package @silly-suite/silly-logging
