@@ -18,9 +18,9 @@ Below are some examples and documentation to help you use the module
 
 I encourage writing unit tests so that you can have confidence that you're using the module correctly
 
-#### Mocking the Decorator
+#### Asserting what is Logged by the Decorators
 
-You can test your usage of the decorator by mocking the decorator
+You can test your usage of the decorators by asserting what is logged.
 
 Suppose you had the following class that uses the decorator:
 
@@ -67,6 +67,45 @@ Your test suite would then look something like this (using jest):
 ```typescript
 import * as SillyLoggingModule from '@silly-suite/silly-logging';
 import { MyClass } from './my-class';
+
+function expectCalledWithArg(mock: jest.Mock, arg: unknown, nthCall = 0) {
+  expect(mock.mock.calls[nthCall]).toEqual(expect.arrayContaining([arg]));
+}
+
+describe('Given class with logger', () => {
+  let classUnderTest: MyClass;
+  let logger: SillyLoggingModule.SillyLogger;
+  let infoMock: jest.Mock;
+
+  beforeEach(() => {
+    infoMock = jest.fn();
+    logger = {
+      info: infoMock,
+    } as unknown as SillyLoggingModule.SillyLogger;
+    classUnderTest = new MyClass(logger);
+  });
+
+  describe('When invoking method decorated by LogOnArrival', () => {
+    beforeEach(() => {
+      classUnderTest.testLogOnArrival('pass123');
+    });
+
+    it('Then correct information is logged', () => {
+      expectCalledWithArg(infoMock, {name: 'pass', value: '****'})
+    });
+  });
+});
+```
+
+#### Mocking the Decorators
+
+You can test your usage of the decorators by mocking them.
+
+Suppose you had the same ```MyClass``` class defined in the documentation above. Your test suite would then look something like this (using jest):
+
+```typescript
+import * as SillyLoggingModule from '@silly-suite/silly-logging';
+import { MyClass } from './my-class';
 import { retrieveLoggerOnClass } from './retrieve-logger.util';
 const mockLogOnArrival = (
   SillyLoggingModule as unknown as { logOnArrivalSpy: jest.Mock }
@@ -94,13 +133,9 @@ jest.mock('./mask-password.util.ts', () => {
 describe('Given class with logger', () => {
   let classUnderTest: MyClass;
   let logger: SillyLoggingModule.SillyLogger;
-  let infoMock: jest.Mock;
 
   beforeEach(() => {
-    infoMock = jest.fn();
-    logger = {
-      info: infoMock,
-    } as unknown as SillyLoggingModule.SillyLogger;
+    logger = {} as unknown as SillyLoggingModule.SillyLogger;
     classUnderTest = new MyClass(logger);
   });
 
