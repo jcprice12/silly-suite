@@ -114,7 +114,7 @@ describe('Given class with logger', () => {
         'testLogOnArrival',
         retrieveLoggerOnClass,
         {
-          argMappings: ['pass', null],
+          argMappings: ['pass'],
         }
       );
     });
