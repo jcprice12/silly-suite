@@ -11,7 +11,7 @@ export function UseSillyLockForPromise<K>(
     descriptor: PropertyDescriptor
   ) {
     descriptor.value = new Proxy(descriptor.value, {
-      apply: async function (original, thiz: unknown, args: Array<unknown>) {
+      apply: function (original, thiz: unknown, args: Array<unknown>) {
         const decoratedMethodData = {
           thiz,
           target,
@@ -22,9 +22,7 @@ export function UseSillyLockForPromise<K>(
         const sillyLockKey = getSillyLockKey(decoratedMethodData);
         return sillyLock.executeCriticalSectionWhenLockAcquired(
           sillyLockKey,
-          async () => {
-            return await original.apply(thiz, args);
-          }
+          () => original.apply(thiz, args)
         );
       },
     });
