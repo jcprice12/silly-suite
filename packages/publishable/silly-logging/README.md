@@ -131,28 +131,18 @@ jest.mock('./mask-password.util.ts', () => {
 });
 
 describe('Given class with logger', () => {
-  let classUnderTest: MyClass;
-  let logger: SillyLoggingModule.SillyLogger;
-
   beforeEach(() => {
-    logger = {} as unknown as SillyLoggingModule.SillyLogger;
-    classUnderTest = new MyClass(logger);
+    new MyClass({} as unknown as SillyLoggingModule.SillyLogger);
   });
 
-  describe('When invoking method decorated by LogOnArrival', () => {
-    beforeEach(() => {
-      classUnderTest.testLogOnArrival('pass123');
-    });
-
-    it('Then decorator used correctly', () => {
-      expect(mockLogOnArrival).toHaveBeenCalledWith(
-        'testLogOnArrival',
-        retrieveLoggerOnClass,
-        {
-          argMappings: ['pass'],
-        }
-      );
-    });
+  it('Then decorator used correctly', () => {
+    expect(mockLogOnArrival).toHaveBeenCalledWith(
+      'testLogOnArrival',
+      retrieveLoggerOnClass,
+      {
+        argMappings: ['pass'],
+      }
+    );
   });
 });
 ```
